@@ -312,18 +312,18 @@ class TransactionDataset(Dataset):
             self.encoder_fit[col_name] = col_fit
             data[col_name] = col_data
 
-        log.info("timestamp fit transform")
-        # timestamp = self.timeEncoder(data[['Year', 'Month', 'Day', 'Time']])
-        timestamp = self.timeEncoder(data[['date_time']])
-        timestamp_fit, timestamp = self.label_fit_transform(timestamp, enc_type="time")
-        self.encoder_fit['Timestamp'] = timestamp_fit
-        data['Timestamp'] = timestamp
+        # log.info("timestamp fit transform")
+        # # timestamp = self.timeEncoder(data[['Year', 'Month', 'Day', 'Time']])
+        # timestamp = self.timeEncoder(data[['date_time']])
+        # timestamp_fit, timestamp = self.label_fit_transform(timestamp, enc_type="time")
+        # self.encoder_fit['Timestamp'] = timestamp_fit
+        # data['Timestamp'] = timestamp
 
-        log.info("timestamp quant transform")
-        coldata = np.array(data['Timestamp'])
-        bin_edges, bin_centers, bin_widths = self._quantization_binning(coldata)
-        data['Timestamp'] = self._quantize(coldata, bin_edges)
-        self.encoder_fit["Timestamp-Quant"] = [bin_edges, bin_centers, bin_widths]
+        # log.info("timestamp quant transform")
+        # coldata = np.array(data['Timestamp'])
+        # bin_edges, bin_centers, bin_widths = self._quantization_binning(coldata)
+        # data['Timestamp'] = self._quantize(coldata, bin_edges)
+        # self.encoder_fit["Timestamp-Quant"] = [bin_edges, bin_centers, bin_widths]
 
         log.info("timedelta fit transform")
         timedelta_fit, timedelta = self.label_fit_transform(data[['TimeDelta']], enc_type="time")
@@ -373,12 +373,14 @@ class TransactionDataset(Dataset):
 
         columns_to_select = ['User',
                              'Card',
-                             'Timestamp',
+                            #  'Timestamp',
                              'Amount',
                              'Use Chip',
                              'Merchant State',
                              'MCC',
                              'Daily Sum',
+                             'Daily Num',
+                             'Daily Loc',
                              'TimeDelta',
                               'CI',
                              'Is Fraud?']
