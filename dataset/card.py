@@ -99,14 +99,16 @@ class TransactionDataset(Dataset):
 
     @staticmethod
     def timeEncoder(X):
-        X_hm = X['Time'].str.split(':', expand=True)
-        d = pd.to_datetime(dict(year=X['Year'], month=X['Month'], day=X['Day'], hour=X_hm[0], minute=X_hm[1])).astype(
-            int)
+        # X_hm = X['Time'].str.split(':', expand=True)
+        # d = pd.to_datetime(dict(year=X['Year'], month=X['Month'], day=X['Day'], hour=X_hm[0], minute=X_hm[1])).astype(
+        #     int)
+        d = pd.to_datetime(X['date_time']).astype(int)
         return pd.DataFrame(d)
 
     @staticmethod
     def amountEncoder(X):
-        amt = X.apply(lambda x: x[1:]).astype(float).apply(lambda amt: max(1, amt)).apply(math.log)
+        # amt = X.apply(lambda x: x[1:]).astype(float).apply(lambda amt: max(1, amt)).apply(math.log)
+        amt = X.apply(lambda amt: max(1, amt)).apply(math.log)
         return pd.DataFrame(amt)
 
     @staticmethod
@@ -289,14 +291,19 @@ class TransactionDataset(Dataset):
         log.info(f"{data_file} is read.")
 
         log.info("nan resolution.")
-        data['Errors?'] = self.nanNone(data['Errors?'])
+        # we don't have Errors? , Zip columns.
+        # data['Errors?'] = self.nanNone(data['Errors?'])
+        # data['Zip'] = self.nanZero(data['Zip'])
         data['Is Fraud?'] = self.fraudEncoder(data['Is Fraud?'])
-        data['Zip'] = self.nanZero(data['Zip'])
         data['Merchant State'] = self.nanNone(data['Merchant State'])
         data['Use Chip'] = self.nanNone(data['Use Chip'])
         data['Amount'] = self.amountEncoder(data['Amount'])
+        data['Daily Sum'] = self.amountEncoder(data['Daily Sum'])
+        # 
+        # data['Daily Loc'] = self.amountEncoder(data['Daily Loc'])
+        # data['Daily Sum'] = self.amountEncoder(data['Daily Num'])
 
-        sub_columns = ['Errors?', 'MCC', 'Zip', 'Merchant State', 'Merchant City', 'Merchant Name', 'Use Chip']
+        sub_columns = ['MCC', 'Merchant State', 'Use Chip', 'CI']
 
         log.info("label-fit-transform.")
         for col_name in tqdm.tqdm(sub_columns):
@@ -306,7 +313,8 @@ class TransactionDataset(Dataset):
             data[col_name] = col_data
 
         log.info("timestamp fit transform")
-        timestamp = self.timeEncoder(data[['Year', 'Month', 'Day', 'Time']])
+        # timestamp = self.timeEncoder(data[['Year', 'Month', 'Day', 'Time']])
+        timestamp = self.timeEncoder(data[['date_time']])
         timestamp_fit, timestamp = self.label_fit_transform(timestamp, enc_type="time")
         self.encoder_fit['Timestamp'] = timestamp_fit
         data['Timestamp'] = timestamp
@@ -317,23 +325,62 @@ class TransactionDataset(Dataset):
         data['Timestamp'] = self._quantize(coldata, bin_edges)
         self.encoder_fit["Timestamp-Quant"] = [bin_edges, bin_centers, bin_widths]
 
+        log.info("timedelta fit transform")
+        timedelta_fit, timedelta = self.label_fit_transform(data[['TimeDelta']], enc_type="time")
+        self.encoder_fit['TimeDelta'] = timedelta_fit
+        data['TimeDelta'] = timedelta
+
+        log.info("timedelta quant transform")
+        coldata = np.array(data['TimeDelta'])
+        bin_edges, bin_centers, bin_widths = self._quantization_binning(coldata)
+        data['TimeDelta'] = self._quantize(coldata, bin_edges)
+        self.encoder_fit["TimeDelta-Quant"] = [bin_edges, bin_centers, bin_widths]        
+
         log.info("amount quant transform")
         coldata = np.array(data['Amount'])
         bin_edges, bin_centers, bin_widths = self._quantization_binning(coldata)
         data['Amount'] = self._quantize(coldata, bin_edges)
         self.encoder_fit["Amount-Quant"] = [bin_edges, bin_centers, bin_widths]
 
+        log.info("daily sum quant transform")
+        coldata = np.array(data['Daily Sum'])
+        bin_edges, bin_centers, bin_widths = self._quantization_binning(coldata)
+        data['Daily Sum'] = self._quantize(coldata, bin_edges)
+        self.encoder_fit["Daily Sum-Quant"] = [bin_edges, bin_centers, bin_widths]
+
+
+        log.info("Daily Num fit transform")
+        daily_num_fit, daily_num = self.label_fit_transform(data[['Daily Num']], enc_type="time")
+        self.encoder_fit['Daily Num'] = daily_num_fit
+        data['Daily Num'] = daily_num
+
+        log.info("Daily Num quant transform")
+        coldata = np.array(data['Daily Num'])
+        bin_edges, bin_centers, bin_widths = self._quantization_binning(coldata)
+        data['Daily Num'] = self._quantize(coldata, bin_edges)
+        self.encoder_fit["Daily Num-Quant"] = [bin_edges, bin_centers, bin_widths]
+
+        log.info("Daily Loc fit transform")
+        daily_loc_fit, daily_loc = self.label_fit_transform(data[['Daily Loc']], enc_type="time")
+        self.encoder_fit['Daily Loc'] = daily_loc_fit
+        data['Daily Loc'] = daily_loc
+
+        log.info("Daily Loc quant transform")
+        coldata = np.array(data['Daily Loc'])
+        bin_edges, bin_centers, bin_widths = self._quantization_binning(coldata)
+        data['Daily Loc'] = self._quantize(coldata, bin_edges)
+        self.encoder_fit["Daily Loc-Quant"] = [bin_edges, bin_centers, bin_widths]
+
         columns_to_select = ['User',
                              'Card',
                              'Timestamp',
                              'Amount',
                              'Use Chip',
-                             'Merchant Name',
-                             'Merchant City',
                              'Merchant State',
-                             'Zip',
                              'MCC',
-                             'Errors?',
+                             'Daily Sum',
+                             'TimeDelta',
+                              'CI',
                              'Is Fraud?']
 
         self.trans_table = data[columns_to_select]
