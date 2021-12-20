@@ -115,7 +115,8 @@ class TabFormerBertForMaskedLM(BertForMaskedLM):
 
         prediction_scores = self.cls(sequence_output) # [bsz * seqlen * vocab_sz]
 
-        outputs = (prediction_scores,) + outputs[2:]
+        # outputs = (prediction_scores,) + outputs[2:]
+        outputs = (prediction_scores,) + outputs
 
         # prediction_scores : [bsz x seqlen x vsz]
         # masked_lm_labels  : [bsz x seqlen]
