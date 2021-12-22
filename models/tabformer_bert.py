@@ -107,6 +107,8 @@ class TabFormerBertForMaskedLM(BertForMaskedLM):
 
         sequence_output = outputs[0]  # [bsz * seqlen * hidden]
 
+        return (sequence_output,input_ids,)
+
         if not self.config.flatten:
             output_sz = list(sequence_output.size())
             expected_sz = [output_sz[0], output_sz[1]*self.config.ncols, -1]
