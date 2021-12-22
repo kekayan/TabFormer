@@ -104,7 +104,9 @@ class TabFormerBertForMaskedLM(BertForMaskedLM):
             encoder_hidden_states=encoder_hidden_states,
             encoder_attention_mask=encoder_attention_mask,
         )
-
+        # BERT model outputs two variables
+        # contains the embedding vectors of all of the tokens in a sequence
+        # contains the embedding vector of [CLS] token
         sequence_output = outputs[0]  # [bsz * seqlen * hidden]
 
         return (sequence_output,input_ids,)
