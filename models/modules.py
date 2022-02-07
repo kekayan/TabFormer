@@ -10,7 +10,7 @@ from transformers import (
 
 from models.tabformer_tokenizer import TabFormerTokenizer
 from models.hierarchical import TabFormerEmbeddings
-from models.tabformer_bert import TabFormerBertForMaskedLM, TabFormerBertConfig
+from models.tabformer_bert import TabFormerBertForMaskedLM, TabFormerBertConfig, TabFormerBertModel
 from models.tabformer_gpt2 import TabFormerGPT2LMHeadModel
 
 
@@ -35,7 +35,8 @@ class TabFormerHierarchicalLM(PreTrainedModel):
         self.config = config
 
         self.tab_embeddings = TabFormerEmbeddings(self.config)
-        self.tb_model = TabFormerBertForMaskedLM(self.config, vocab)
+        # self.tb_model = TabFormerBertForMaskedLM(self.config, vocab)
+        self.tb_model = TabFormerBertModel(self.config)
 
     def forward(self, input_ids, **input_args):
         inputs_embeds = self.tab_embeddings(input_ids)
